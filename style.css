@@ -1,0 +1,348 @@
+.done{
+    text-decoration: line-through;
+}
+
+body{
+    font-family: Arial, Helvetica, sans-serif;
+    background-color: #f4f4f4;
+    text-align: center;
+    margin: 20px;
+}
+
+.container{
+    max-width: 500px;
+    margin: auto;
+    padding: 20px;
+    background-color: #fff;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+}
+
+h2{
+    color: #333;
+}
+
+.input-container{
+    display: flex;
+    justify-content: center;
+    margin-bottom: 20px;
+}
+
+#tasks{
+    flex-grow: 2;
+    min-width: 0;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius : 4px;
+}
+
+#addTaskButton{
+    padding: 10px 15px;
+    margin-left: 5px;
+    background-color: #28a745;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+#addTaskButton:hover{
+    background-color: #218838;
+}
+
+#taskList{
+    list-style-type: none;
+    padding: 0;
+}
+
+#taskList li{
+    position: relative;
+    padding: 10px;
+    margin: 5px 0;
+    border-bottom: 1px solid #ccc;
+    border-radius: 5px;
+    display: flex;
+    flex-direction: column;
+    background: #fff;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    overflow: visible;
+}
+
+.task-main {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 5px;
+}
+
+#taskList li.buttons{
+    display: flex;
+    justify-content: flex-end;
+    flex-grow: 1;
+}
+
+#tagInput{
+    width: 90px;
+    flex-grow: 0;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    margin-left: 5px;
+}
+
+#searchTag{
+    flex-grow: 1;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+.menuButton {
+    background: none;
+    border: none;
+    font-size: 20px;
+    cursor: pointer;
+    padding: 0 8px;
+    color: #555;
+}
+.menuButton:hover {
+    color: #000;
+}
+
+.dropdown-menu {
+    position: absolute;
+    right: 10px;
+    top: calc(100% + 5px);
+    background: #ffffff;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    display: flex;
+    flex-direction: column;
+    z-index: 1000;
+    min-width: 100px;
+    max-width: 150px;
+    padding: 6px 0;
+}
+.dropdown-menu button {
+    display: block;
+    width: 100%;
+    background: none;
+    border: none;
+    padding: 8px 12px;
+    text-align: left;
+    cursor: pointer;
+    font-size: 14px;
+    box-sizing: border-box;
+    white-space: nowrap;
+}
+
+.buttons {
+    position: relative;
+    display: flex;
+    align-items: center;
+    height: 100%;
+    overflow: visible;
+}
+
+.dropdown-menu .doneButton {
+    background-color: #007bff;
+    color: white;
+    border-radius: 4px;
+    padding: 8px 12px;
+    text-align: center;
+}
+.dropdown-menu .doneButton:hover {
+    background-color: #0056b3;
+}
+.dropdown-menu .editButton {
+    background-color: #ffc107;
+    color: white;
+    border-radius: 4px;
+    padding: 8px 12px;
+    text-align: center;
+}
+.dropdown-menu .editButton:hover {
+    background-color: #e0a800;
+}
+.dropdown-menu .deleteButton {
+    background-color: #dc3545;
+    color: white;
+    border-radius: 4px;
+    padding: 8px 12px;
+    text-align: center;
+}
+.dropdown-menu .deleteButton:hover {
+    background-color: #c82333;
+}
+
+/* Modal Styles */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 2000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-content {
+    background-color: #fff;
+    padding: 30px;
+    border-radius: 15px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    text-align: center;
+    max-width: 400px;
+    width: 90%;
+    animation: modalSlideIn 0.3s ease-out;
+}
+
+@keyframes modalSlideIn {
+    from {
+        transform: translateY(-50px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.modal-content h3 {
+    color: #333;
+    margin-bottom: 15px;
+    font-size: 22px;
+}
+
+.modal-content p {
+    color: #666;
+    margin-bottom: 25px;
+    font-size: 16px;
+    line-height: 1.5;
+}
+
+.modal-buttons {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+}
+
+.confirm-btn {
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    padding: 12px 25px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: bold;
+    transition: background-color 0.3s;
+}
+
+.confirm-btn:hover {
+    background-color: #c82333;
+}
+
+.cancel-btn {
+    background-color: #6c757d;
+    color: white;
+    border: none;
+    padding: 12px 25px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: bold;
+    transition: background-color 0.3s;
+}
+
+.cancel-btn:hover {
+    background-color: #5a6268;
+}
+
+#clearAllButton {
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    padding: 12px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    margin-top: 20px;
+    font-size: 16px;
+    transition: background-color 0.3s;
+}
+
+#clearAllButton:hover {
+    background-color: #c82333;
+}
+
+.dragging {
+    opacity: 0.5;
+    transform: rotate(5deg);
+}
+
+#taskList li[draggable="true"] {
+    cursor: move;
+}
+
+#taskList li[draggable="true"]:hover {
+    background-color: #f8f9fa;
+}
+
+.bulk-buttons {
+  margin-top: 10px;
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+}
+
+.bulk-buttons button {
+  padding: 8px 12px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.bulk-buttons button:hover {
+  background-color: #0056b3;
+}
+
+.timer-section {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-grow: 1;
+    margin-top: 5px;
+}
+
+.progress-container {
+    flex-grow: 1;
+    height: 8px;
+    background-color: #eee;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.progress-bar {
+    height: 100%;
+    background-color: #28a745;
+    transition: width 1s linear;
+}
+
+.startTimerButton {
+    padding: 5px 10px;
+    background-color: #17a2b8;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    white-space: nowrap;
+    min-width: 60px;
+}
+.startTimerButton:hover {
+    background-color: #138496;
+}

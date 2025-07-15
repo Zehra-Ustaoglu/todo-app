@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style.css">
+    <title>Document</title>
+    
+</head>
+<body>
+    <div class="container">
+        <h2>To-do List</h2>
+        <div class="input-container">
+            <input type="text" id="tasks" placeholder="Add new task">
+            <input type="text" id="tagInput" placeholder="Tag (e.g. work, home)">
+            <input type="number" id="durationInput" placeholder="Time(minute)" min="1" style="width: 100px; margin-left: 5px;">
+
+            <button id="addTaskButton" onclick = "addTask()">Add Task </button>
+        </div>
+        <div class="input-container" id="searchContainer" style="display:none;">
+            <input type="text" id="searchTag" placeholder="Search by tag" oninput="filterByTag()">
+        </div>
+        <ul id="taskList"></ul>
+        <button id="clearAllButton" onclick="clearAllTasks()">Clear All</button>
+
+        <div class="bulk-buttons">
+            <button onclick="deleteSelectedTasks()">Delete Selected </button>
+            <button onclick="completeSelectedTasks()">Done Selected</button>
+        </div>
+
+
+    </div>
+
+    <!-- Custom Confirmation Modal -->
+    <div id="confirmModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <h3>Delete All Tasks</h3>
+            <p>Are you sure you want to delete all tasks?</p>
+            <div class="modal-buttons">
+                <button class="confirm-btn" onclick="confirmClearAll()">Yes, Delete</button>
+                <button class="cancel-btn" onclick="closeModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+        function addTask(){
+            let tasks = document.getElementById("tasks");
+            let tagInput = document.getElementById("tagInput");
+            let taskText = tasks.value.trim();
+            let tagText = tagInput.value.trim();
+
+            let durationInput = document.getElementById("durationInput");
+            let duration = parseInt(durationInput.value.trim()); 
+
+            if(taskText === "") return;
+
+            let taskList = document.getElementById("taskList");
+            let li = document.createElement("li");
+            li.setAttribute('data-tag', tagText.toLowerCase());
+            li.setAttribute('data-duration', duration || 0);
+            li.setAttribute('data-created', Date.now());
+            li.setAttribute('draggable', true);
+            li.setAttribute('data-started', 'false');
+
+
+           li.addEventListener('dragstart', e => {
+              e.dataTransfer.setData('text/plain', li.dataset.id = Date.now());
+              li.classList.add('dragging');
+           });
+           li.addEventListener('dragend', () => {
+              li.classList.remove('dragging');
+            });
+            li.innerHTML = `<div class="task-main">
+                                <input type="checkbox" class="selectTask" />
+                                <span>${taskText}</span>
+                                <span class="tag">${tagText ? tagText : ''}</span>
+                                <div class="buttons">
+                                    <button class="menuButton" onclick="toggleMenu(this)">⋮</button>
+                                    <div class="dropdown-menu" style="display:none;">
+                                        <button class="doneButton" onclick="completeTask(this)">Done</button>
+                                        <button class="editButton" onclick="editTask(this)">Edit</button>
+                                        <button class="deleteButton" onclick="deleteTask(this)">Delete</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="timer-section">
+                                <div class="progress-container">
+                                    <div class="progress-bar" style="width: 100%;"></div>
+                                </div>
+                                <button class="startTimerButton" onclick="startCountdown(this)">Start</button>
+                            </div>`;
+            taskList.appendChild(li);
+            tasks.value = '';
+            tagInput.value = '';
+            durationInput.value = '';
+            saveTasksToStorage();
+            // show the search box if it's the first task
+            let searchContainer = document.getElementById('searchContainer');
+            if (taskList.children.length === 1) {
+                searchContainer.style.display = '';
+            }
+        }
+
+        function deleteTask(_task){
+            let task = _task.closest('li');
+            task.remove();
+            saveTasksToStorage();
+        }
+
+        function completeTask(_task){
+            let task = _task.closest('li');
+            let span = task.querySelector('span:not(.tag)');
+            span.classList.toggle("done");
+            saveTasksToStorage();
+        }
+
+        function editTask(_task){
+            let task = _task.closest('li');
+            let span = task.querySelector('span:not(.tag)');
+            
+            if (task.querySelector('input')) return; 
+            let currentText = span.textContent;
+            let input = document.createElement('input');
+            input.type = 'text';
+            input.value = currentText;
+            input.className = 'editInput';
+            input.onblur = saveEdit;
+            input.onkeydown = function(e) {
+                if (e.key === 'Enter') {
+                    saveEdit.call(this);
+                }
+            };
+            span.replaceWith(input);
+            input.focus();
+            function saveEdit() {
+                let newText = input.value.trim();
+                if (newText === '') newText = currentText;
+                let newSpan = document.createElement('span');
+                newSpan.textContent = newText;
+                if (span.classList.contains('done')) newSpan.classList.add('done');
+                input.replaceWith(newSpan);
+                saveTasksToStorage();
+            }
+        }
+
+        function clearAllTasks() {
+            document.getElementById('confirmModal').style.display = 'flex';
+        }
+
+        function confirmClearAll() {
+            document.getElementById("taskList").innerHTML = "";
+            localStorage.removeItem("todoTasks");
+            document.getElementById("searchContainer").style.display = "none";
+            closeModal();
+        }
+
+        function closeModal() {
+            document.getElementById('confirmModal').style.display = 'none';
+        }
+
+        function deleteSelectedTasks() {
+            const selectedTasks = document.querySelectorAll('.selectTask:checked');
+            selectedTasks.forEach(checkbox => {
+                checkbox.closest('li').remove();
+            });
+            saveTasksToStorage();
+        }
+
+        function completeSelectedTasks() {
+            const selectedTasks = document.querySelectorAll('.selectTask:checked');
+            selectedTasks.forEach(checkbox => {
+                const span = checkbox.closest('li').querySelector('span:not(.tag)');
+                span.classList.add('done');
+                checkbox.checked = false;
+            });
+            saveTasksToStorage();
+        }
+
+        function filterByTag() {
+            let search = document.getElementById('searchTag').value.trim().toLowerCase();
+            let items = document.querySelectorAll('#taskList li');
+            items.forEach(li => {
+                let tag = li.getAttribute('data-tag');
+                if (!search || (tag && tag.includes(search))) {
+                    li.style.display = '';
+                } else {
+                    li.style.display = 'none';
+                }
+            });
+        }
+
+        function toggleMenu(btn) {
+            let menu = btn.nextElementSibling;
+            let isOpen = menu.style.display === 'block';
+            // close all open menus
+            document.querySelectorAll('.dropdown-menu').forEach(m => m.style.display = 'none');
+            menu.style.display = isOpen ? 'none' : 'block';
+        }
+        // don't close the menu when clicking inside it
+        document.addEventListener('click', function(e) {
+            if (!e.target.classList.contains('menuButton')) {
+                document.querySelectorAll('.dropdown-menu').forEach(m => m.style.display = 'none');
+            }
+        });
+
+        function saveTasksToStorage() {
+          const tasks = [];
+          document.querySelectorAll('#taskList li').forEach(li => {
+            const text = li.querySelector('span:not(.tag)')?.textContent || '';
+            const tag = li.getAttribute('data-tag') || '';
+            const isDone = li.querySelector('span:not(.tag)')?.classList.contains('done') || false;
+            const duration = parseInt(li.getAttribute('data-duration')) || 0;
+            const isStarted = li.getAttribute('data-started') === 'true';
+            const startTime = li.getAttribute('data-start-time') || null;
+            tasks.push({ text, tag, isDone, duration, isStarted, startTime });
+        });
+        localStorage.setItem('todoTasks', JSON.stringify(tasks));
+        }  
+
+       function loadTasksFromStorage() {
+          const data = localStorage.getItem('todoTasks');
+          if (!data) return;
+
+          const taskList = document.getElementById("taskList");
+          const tasks = JSON.parse(data);
+          tasks.forEach(task => {
+          const li = document.createElement("li");
+          li.setAttribute('data-tag', (task.tag || '').toLowerCase());
+          li.setAttribute('draggable', true);
+          li.setAttribute('data-duration', task.duration || 0);
+          li.setAttribute('data-started', task.isStarted ? 'true' : 'false');
+          if (task.startTime) {
+            li.setAttribute('data-start-time', task.startTime);
+          }
+          
+          // Add drag event listeners for loaded tasks
+          li.addEventListener('dragstart', e => {
+              e.dataTransfer.setData('text/plain', li.dataset.id = Date.now());
+              li.classList.add('dragging');
+          });
+          li.addEventListener('dragend', () => {
+              li.classList.remove('dragging');
+          });
+          
+          li.innerHTML = `<div class="task-main">
+                                <input type="checkbox" class="selectTask" />
+                                <span ${task.isDone ? 'class="done"' : ''}>${task.text}</span>
+                                <span class="tag">${task.tag ? task.tag : ''}</span>
+                                <div class="buttons">
+                                    <button class="menuButton" onclick="toggleMenu(this)">⋮</button>
+                                    <div class="dropdown-menu" style="display:none;">
+                                        <button class="doneButton" onclick="completeTask(this)">Done</button>
+                                        <button class="editButton" onclick="editTask(this)">Edit</button>
+                                        <button class="deleteButton" onclick="deleteTask(this)">Delete</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="timer-section">
+                                <div class="progress-container">
+                                    <div class="progress-bar" style="width: 100%;"></div>
+                                </div>
+                                <button class="startTimerButton" onclick="startCountdown(this)">${task.isStarted ? 'Started' : 'Start'}</button>
+                            </div>`;
+        taskList.appendChild(li);
+
+        // Timer başlatma işlemini innerHTML'den SONRA yap
+        if (task.isStarted && task.duration > 0) {
+            const startBtn = li.querySelector('.startTimerButton');
+            if (startBtn) {
+                startBtn.disabled = true;
+                startCountdown(startBtn);
+            }
+        }
+           });
+
+           // If tasks are loaded, show the search box
+           if (tasks.length > 0) {
+           document.getElementById('searchContainer').style.display = '';
+           }
+           
+           // Sıralama değiştiğinde kaydet
+           saveTasksToStorage();
+        }
+        window.addEventListener('load', loadTasksFromStorage);
+
+        // Drag and Drop functionality
+        let taskList = document.getElementById("taskList");
+
+        taskList.addEventListener('dragover', e => {
+            e.preventDefault();
+            const dragging = document.querySelector('.dragging');
+            const afterElement = getDragAfterElement(taskList, e.clientY);
+            if (afterElement == null) {
+                taskList.appendChild(dragging);
+            } else {
+                taskList.insertBefore(dragging, afterElement);
+            }
+        });
+
+        taskList.addEventListener('dragend', () => {
+            // Drag işlemi bittiğinde kaydet
+            setTimeout(() => saveTasksToStorage(), 100);
+        });
+
+        function getDragAfterElement(container, y) {
+            const draggableElements = [...container.querySelectorAll('li:not(.dragging)')];
+            return draggableElements.reduce((closest, child) => {
+                const box = child.getBoundingClientRect();
+                const offset = y - box.top - box.height / 2;
+                if (offset < 0 && offset > closest.offset) {
+                    return { offset: offset, element: child };
+                } else {
+                    return closest;
+                }
+            }, { offset: Number.NEGATIVE_INFINITY }).element;
+        }
+
+        function startCountdown(button) {
+            const li = button.closest('li');
+            const bar = li.querySelector('.progress-bar');
+            const duration = parseInt(li.getAttribute('data-duration'));
+            if (isNaN(duration)) return;
+
+            const totalTime = duration * 60 * 1000; // ms
+            let startTime;
+            
+            // Eğer daha önce başlatılmışsa, başlangıç zamanını al
+            if (li.getAttribute('data-start-time')) {
+                startTime = parseInt(li.getAttribute('data-start-time'));
+            } else {
+                // İlk kez başlatılıyorsa, şu anki zamanı kaydet
+                startTime = Date.now();
+                li.setAttribute('data-start-time', startTime);
+            }
+
+            li.setAttribute('data-started', 'true');
+            saveTasksToStorage();
+
+            button.disabled = true;
+            button.textContent = "Started";
+
+            function formatTime(ms) {
+                const totalSeconds = Math.ceil(ms / 1000);
+                const minutes = Math.floor(totalSeconds / 60);
+                const seconds = totalSeconds % 60;
+                return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            }
+
+            function update() {
+                const elapsed = Date.now() - startTime;
+                const remaining = totalTime - elapsed;
+                const percent = Math.max(0, (remaining / totalTime) * 100);
+                bar.style.width = percent + "%";
+                bar.textContent = formatTime(remaining);
+                bar.style.textAlign = "center";
+                bar.style.color = "white";
+                bar.style.fontWeight = "bold";
+                bar.style.fontSize = "12px";
+
+                if (remaining <= 0) {
+                    bar.style.backgroundColor = "#dc3545"; // red
+                    bar.style.width = "100%";
+                    bar.textContent = "DONE!";
+                    li.classList.add("expired");
+                    li.setAttribute('data-started', 'false');
+                    saveTasksToStorage();
+                    return;
+                }
+                requestAnimationFrame(update);
+           }
+        update();
+        }
+    </script>
+</body>
+</html>
